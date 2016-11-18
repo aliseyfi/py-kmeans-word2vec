@@ -4,28 +4,25 @@ from logging import getLogger
 
 import numpy as np
 from gensim.models.word2vec import Word2Vec
-from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.externals import joblib
 
 
 logger = getLogger(__name__)
 
 
-class Word2VecCluster(Object):
-
-    def __init__(self, model):
-        if type(model) == str:
-            self.classifier = joblib.load(model)
-        else:
-            self.classifier = model
-
-    @lru_cache(maxsize=None)
-    def to_class(self, vec):
-        return self.classifier.predict([vec])
-
-
 def make_dataset(model):
-    """
+    """Make dataset from pre-trained Word2Vec model.
+
+    Paramters
+    ---------
+    model: gensim.models.word2vec.Word2Vec
+        pre-traind Word2Vec model as gensim object.
+
+    Returns
+    -------
+    numpy.ndarray((vocabrary size, vector size))
+        Sikitlearn's X format.
     """
     V = model.index2word
     X = np.zeros((len(V), model.vector_size))
@@ -36,6 +33,20 @@ def make_dataset(model):
 
 
 def train(X, K):
+    """Learn K-Means Clustering with MiniBatchKMeans.
+
+    Paramters
+    ---------
+    X: numpy.ndarray((sample size, feature size))
+        training dataset.
+    K: int
+        number of clusters to use MiniBatchKMeans.
+
+    Returens
+    --------
+    sklearn.cluster.MiniBatchKMeans
+        trained model.
+    """
     logger.info('start to fiting KMeans with {} classs.'.format(K))
     classifier = MiniBatchKMeans(n_clusters=K, random_state=0)
     classifier.fit(X)
