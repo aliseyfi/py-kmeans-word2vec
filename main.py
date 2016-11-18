@@ -3,20 +3,17 @@ from logging import getLogger
 
 import numpy as np
 from gensim.models.word2vec import Word2Vec
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.externals import joblib
 
 
 logger = getLogger(__name__)
 
 
-def make_dataset(model, sample=None):
-
-    if sample is not None:
-        logger.info('start to create {} samples dataset.'.format(sample))
-        V = np.random.choice(model.index2word, sample)
-    else:
-        V = model.index2word
+def make_dataset(model):
+    """
+    """
+    V = model.index2word
     X = np.zeros((len(V), model.vector_size))
 
     for index, word in enumerate(V):
@@ -26,7 +23,7 @@ def make_dataset(model, sample=None):
 
 def train(X, K):
     logger.info('start to fiting KMeans with {} classs.'.format(K))
-    classifier = KMeans(n_clusters=K, random_state=0)
+    classifier = MiniBatchKMeans(n_clusters=K, random_state=0)
     classifier.fit(X)
     return classifier
 
@@ -50,12 +47,6 @@ def main():
                         default=500,
                         help='Num of classes on KMeans.')
 
-    parser.add_argument('-s', '--sampling-size',
-                        action='store',
-                        type=int,
-                        default=None,
-                        help='Num of sumpling size to use training dataset.')
-
     parser.add_argument('-p', '--pre-trained-model',
                         action='store',
                         default=None,
@@ -73,7 +64,7 @@ def main():
     model = Word2Vec.load_word2vec_format(args.model, binary=True)
 
     if not args.pre_trained_model:
-        X = make_dataset(model, sample=args.sampling_size)
+        X = make_dataset(model)
         classifier = train(X, args.K)
         joblib.dump(classifier, args.out)
     else:
